@@ -2,6 +2,11 @@ clc;
 clear;
 close all;
 
+%% =====================================================
+% SISTEMA INTELIGENTE DE CLASSIFICAÇÃO DA QUALIDADE
+% NUTRICIONAL DE UMA SOLUÇÃO HIDROPÔNICA USANDO PERCEPTRON
+%% =====================================================
+
 %% LEITURA DOS DADOS
 
 treino = readtable('Dados/hidroponia_treinamento.csv');
@@ -17,7 +22,7 @@ Y_test = table2array(teste(:,6));
 Y_train(Y_train==0) = -1;
 Y_test(Y_test==0) = -1;
 
-% NORMALIZAÇÃO
+%% NORMALIZAÇÃO
 
 Xmin = min(X_train);
 Xmax = max(X_train);
@@ -25,7 +30,7 @@ Xmax = max(X_train);
 X_train = (X_train-Xmin)./(Xmax-Xmin);
 X_test = (X_test-Xmin)./(Xmax-Xmin);
 
-% ADICIONANDO BIAS
+%% ADICIONANDO BIAS
 
 X_train = [ones(size(X_train,1),1) X_train];
 X_test = [ones(size(X_test,1),1) X_test];
@@ -85,7 +90,6 @@ end
 %% TESTE
 
 n_testes = size(X_test,1);
-
 Y_pred = zeros(n_testes,1);
 
 for i = 1:n_testes
@@ -104,7 +108,6 @@ end
 
 acertos = sum(Y_pred==Y_test);
 erros = n_testes-acertos;
-
 acuracia = 100*acertos/n_testes;
 
 fprintf('\n=====================================\n');
@@ -126,6 +129,51 @@ fprintf('Acurácia = %.2f %%\n',acuracia);
 fprintf('\nPesos finais:\n');
 disp(w)
 
+%% DISTRIBUIÇÃO DAS CLASSES
+
+fprintf('\n=====================================\n');
+fprintf('DISTRIBUIÇÃO DAS CLASSES\n');
+fprintf('=====================================\n');
+
+fprintf('Treinamento:\n');
+fprintf('Classe -1: %d amostras\n',sum(Y_train==-1));
+fprintf('Classe 1 : %d amostras\n',sum(Y_train==1));
+
+fprintf('\nTeste:\n');
+fprintf('Classe -1: %d amostras\n',sum(Y_test==-1));
+fprintf('Classe 1 : %d amostras\n',sum(Y_test==1));
+
+%% IMPORTÂNCIA DAS VARIÁVEIS
+
+nomes = ["Temperatura Água","Temperatura Ambiente","Umidade","pH","EC"];
+
+pesos_abs = abs(w(2:end));
+
+[maior_peso,indice] = max(pesos_abs);
+
+fprintf('\n=====================================\n');
+fprintf('ANÁLISE DAS VARIÁVEIS\n');
+fprintf('=====================================\n');
+
+fprintf('Variável mais influente: %s\n',nomes(indice));
+fprintf('Peso associado: %.4f\n',maior_peso);
+
+%% DIAGNÓSTICO DO MODELO
+
+fprintf('\n=====================================\n');
+fprintf('DIAGNÓSTICO DO SISTEMA\n');
+fprintf('=====================================\n');
+
+if acuracia >= 95
+    fprintf('Excelente desempenho do modelo.\n');
+elseif acuracia >= 85
+    fprintf('Bom desempenho do modelo.\n');
+elseif acuracia >= 70
+    fprintf('Desempenho satisfatório.\n');
+else
+    fprintf('Modelo necessita de ajustes.\n');
+end
+
 %% TABELA DE RESULTADOS
 
 Resultado = table(Y_test,Y_pred,...
@@ -133,76 +181,66 @@ Resultado = table(Y_test,Y_pred,...
 
 disp(Resultado)
 
-% GRÁFICO 1 - CONVERGÊNCIA
+%% SIMULAÇÃO DE NOVA SOLUÇÃO
+
+nova_amostra = [1 0.52 0.61 0.70 0.58 0.64];
+
+u = w'*nova_amostra';
+
+if u >= 0
+    qualidade = 'BOA';
+else
+    qualidade = 'RUIM';
+end
+
+fprintf('\n=====================================\n');
+fprintf('SIMULAÇÃO DE NOVA AMOSTRA\n');
+fprintf('=====================================\n');
+
+fprintf('Qualidade prevista: %s\n',qualidade);
+
+%% GRÁFICO 1 - CONVERGÊNCIA
 
 figure
-
-plot(erro_epoca(1:epoca),'b','LineWidth',2)
-
+plot(erro_epoca(1:epoca),'LineWidth',2)
 xlabel('Épocas')
 ylabel('Erro Total')
 title('Convergência do Perceptron')
-
 grid on
 
 %% GRÁFICO 2 - EVOLUÇÃO DOS PESOS
 
 figure
-
 plot(pesos_hist(1:epoca,:),'LineWidth',2)
-
 xlabel('Épocas')
 ylabel('Valor dos Pesos')
 title('Evolução dos Pesos')
-
-legend('Bias',...
-'Temperatura Água',...
-'Temperatura Ambiente',...
-'Umidade',...
-'pH',...
-'EC',...
-'Location','best')
-
+legend('Bias','Temp Água','Temp Ambiente','Umidade','pH','EC')
 grid on
 
 %% GRÁFICO 3 - CLASSE REAL X PREVISTA
 
 figure
-
 plot(Y_test,'bo-','LineWidth',2)
 hold on
-
 plot(Y_pred,'r*-','LineWidth',2)
-
 xlabel('Amostras')
 ylabel('Classe')
 title('Classe Real x Classe Prevista')
-
 legend('Real','Prevista')
-
 grid on
 
-%% GRÁFICO 4 - CUBO 3D DAS AMOSTRAS
+%% GRÁFICO 4 - CUBO 3D
 
 figure
 
-idx_neg = Y_train == -1;
-idx_pos = Y_train == 1;
+idx_neg = Y_train==-1;
+idx_pos = Y_train==1;
 
-scatter3(X_train(idx_neg,2),...
-         X_train(idx_neg,5),...
-         X_train(idx_neg,6),...
-         80,...
-         'r',...
-         'filled')
+scatter3(X_train(idx_neg,2),X_train(idx_neg,5),X_train(idx_neg,6),80,'r','filled')
 hold on
 
-scatter3(X_train(idx_pos,2),...
-         X_train(idx_pos,5),...
-         X_train(idx_pos,6),...
-         80,...
-         'b',...
-         'filled')
+scatter3(X_train(idx_pos,2),X_train(idx_pos,5),X_train(idx_pos,6),80,'b','filled')
 
 xlabel('Temperatura da Água')
 ylabel('pH')
@@ -218,3 +256,28 @@ grid on
 box on
 rotate3d on
 view(45,30)
+
+%% GRÁFICO 5 - DISTRIBUIÇÃO DAS CLASSES
+
+figure
+
+bar([-1 1],[sum(Y_train==-1) sum(Y_train==1)])
+
+xlabel('Classe')
+ylabel('Quantidade de Amostras')
+title('Distribuição das Classes')
+
+grid on
+
+%% GRÁFICO 6 - IMPORTÂNCIA DAS VARIÁVEIS
+
+figure
+
+bar(abs(w(2:end)))
+
+xticklabels({'Temp Água','Temp Ambiente','Umidade','pH','EC'})
+
+ylabel('Peso Absoluto')
+title('Importância das Variáveis')
+
+grid on
