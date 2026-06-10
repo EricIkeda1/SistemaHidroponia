@@ -18,12 +18,15 @@ Y_train = table2array(treino(:,6));
 X_test = table2array(teste(:,1:5));
 Y_test = table2array(teste(:,6));
 
-% Transforma classe 0 em -1
+% Converte a classe 0 em -1 para o Perceptron trabalhar
+% com duas classes: -1 (ruim) e 1 (boa)
 Y_train(Y_train==0) = -1;
 Y_test(Y_test==0) = -1;
 
 %% NORMALIZAÇÃO
 
+% Escala todos os dados para o intervalo [0,1],
+% evitando que variáveis maiores influenciem mais
 Xmin = min(X_train);
 Xmax = max(X_train);
 
@@ -32,6 +35,7 @@ X_test = (X_test-Xmin)./(Xmax-Xmin);
 
 %% ADICIONANDO BIAS
 
+% Adiciona uma coluna de 1 para representar o bias
 X_train = [ones(size(X_train,1),1) X_train];
 X_test = [ones(size(X_test,1),1) X_test];
 
@@ -39,9 +43,13 @@ X_test = [ones(size(X_test,1),1) X_test];
 
 %% PARÂMETROS DO PERCEPTRON
 
+% Taxa de aprendizagem
 eta = 0.01;
+
+% Número máximo de épocas
 epocas = 100;
 
+% Inicialização aleatória dos pesos
 w = rand(n_atributos,1)-0.5;
 
 erro_epoca = zeros(epocas,1);
@@ -57,20 +65,20 @@ for epoca = 1:epocas
 
         x = X_train(i,:)';
 
-        % Soma ponderada
+        % Calcula a soma ponderada entre entradas e pesos
         u = w'*x;
 
-        % Função degrau
+        % Função degrau responsável pela classificação
         if u >= 0
             y = 1;
         else
             y = -1;
         end
 
-        % Erro
+        % Calcula o erro entre saída desejada e obtida
         erro = Y_train(i)-y;
 
-        % Atualização dos pesos
+        % Atualiza os pesos para reduzir o erro
         w = w + eta*erro*x;
 
         erro_total = erro_total + abs(erro);
@@ -80,6 +88,7 @@ for epoca = 1:epocas
     erro_epoca(epoca) = erro_total;
     pesos_hist(epoca,:) = w';
 
+    % Se o erro for zero, o treinamento é encerrado
     if erro_total == 0
         fprintf('\nConvergência alcançada na época %d\n',epoca);
         break
@@ -89,6 +98,7 @@ end
 
 %% TESTE
 
+% Utiliza os pesos aprendidos para prever novas amostras
 n_testes = size(X_test,1);
 Y_pred = zeros(n_testes,1);
 
@@ -106,6 +116,7 @@ end
 
 %% MÉTRICAS
 
+% Calcula desempenho do modelo
 acertos = sum(Y_pred==Y_test);
 erros = n_testes-acertos;
 acuracia = 100*acertos/n_testes;
@@ -147,6 +158,7 @@ fprintf('Classe 1 : %d amostras\n',sum(Y_test==1));
 
 nomes = ["Temperatura Água","Temperatura Ambiente","Umidade","pH","EC"];
 
+% Valores absolutos dos pesos indicam a influência
 pesos_abs = abs(w(2:end));
 
 [maior_peso,indice] = max(pesos_abs);
@@ -183,6 +195,7 @@ disp(Resultado)
 
 %% SIMULAÇÃO DE NOVA SOLUÇÃO
 
+% Exemplo de nova amostra para previsão
 nova_amostra = [1 0.52 0.61 0.70 0.58 0.64];
 
 u = w'*nova_amostra';
@@ -232,6 +245,7 @@ grid on
 
 %% GRÁFICO 4 - CUBO 3D
 
+% Visualização tridimensional das amostras
 figure
 
 idx_neg = Y_train==-1;
