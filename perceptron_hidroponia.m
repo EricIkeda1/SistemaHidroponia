@@ -193,24 +193,6 @@ Resultado = table(Y_test,Y_pred,...
 
 disp(Resultado)
 
-%% SIMULAÇÃO DE NOVA SOLUÇÃO
-
-% Exemplo de nova amostra para previsão
-nova_amostra = [1 0.52 0.61 0.70 0.58 0.64];
-
-u = w'*nova_amostra';
-
-if u >= 0
-    qualidade = 'BOA';
-else
-    qualidade = 'RUIM';
-end
-
-fprintf('\n=====================================\n');
-fprintf('SIMULAÇÃO DE NOVA AMOSTRA\n');
-fprintf('=====================================\n');
-
-fprintf('Qualidade prevista: %s\n',qualidade);
 
 %% GRÁFICO 1 - CONVERGÊNCIA
 
